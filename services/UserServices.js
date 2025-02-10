@@ -7,8 +7,8 @@ class UserService {
         return user;
     }
 
-    async CheckUserById(id) {
-        const user = await Details.findOne({ _id: id });
+    async CheckUserByEmail(email) {
+        const user = await Details.findOne({ Email: email });
         return user;
     }
 
@@ -34,13 +34,13 @@ class UserService {
 
     async UpdateUser(userData) {
         try {
-            const existingUser = await Details.findById(userData.id);
+            const existingUser = await Details.findOne({ Email: userData.Email });
             if (!existingUser) {
-                throw new Error(`User with ID ${userData.id} not exists.`);
+                throw new Error(`User with email ${userData.Email} does not exist.`);
             }
 
-            const updatedUser = await Details.findByIdAndUpdate(
-                userData.id,
+            const updatedUser = await Details.findOneAndUpdate(
+                { Email: userData.Email },
                 userData.updateobj,
                 { new: true }
             );

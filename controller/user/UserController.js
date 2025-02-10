@@ -1,4 +1,5 @@
-const Details = require("../../models/details");  // Fix import name
+const Details = require("../../models/details");
+const Tasks = require("../../models/tasks");
 const UserServices = require("../../services/UserServices");
 
 class UserController {
@@ -71,44 +72,86 @@ class UserController {
             res.status(500).json({ message: 'Internal Server Error' });
         }
     }
-    async GetDetailsById(req, res) {
+    async UpdateName(req, res) {
         try {
-            const GetData = await DetailModel.findById(req.params.id);
-            res.status(200).json(GetData);
+            console.log("Incoming request body:", req.body);
+            const { Username, Email } = req.body;
 
-        } catch (error) {
-            console.error('Error:', error);
-            res.status(500).json({ message: 'Internal Server Error' });
-        }
-    }
-    async UpdateDetailsById(req, res) {
-        try {
-            const { id } = req.params;
-            const { Price } = req.body;
-            const updatedDetails = await DetailModel.findByIdAndUpdate(id, { Price }, { new: true });
-            if (!updatedDetails) {
-                return res.status(404).json({ message: 'Details not found' });
+            const validateuser = await UserServices.CheckUserByEmail(Email);
+
+            if (!validateuser) {
+                return res.status(401).json({
+                    message: 'UnAuthorized',
+                    data: []
+                });
             }
-            res.status(200).json({ message: 'Details updated successfully', Details: updatedDetails });
 
-        } catch (error) {
-            console.error('Error inserting activity:', error);
-            res.status(500).json({ message: 'Internal Server Error' });
-        }
-    }
-    async DeleteDetailsById(req, res) {
-        try {
-            const { id } = req.params;
-            const deletedDetails = await DetailModel.findByIdAndDelete(id);
-            if (!deletedDetails) {
-                return res.status(404).json({ message: 'Details not found' });
+            const updateuser = await UserServices.UpdateUser({
+                Email: Email,
+                updateobj: {
+                    Username: Username
+                }
+            });
+
+            if (updateuser) {
+                return res.status(200).json({
+                    message: 'User Updated Successfully',
+                    data: updateuser
+                });
+            } else {
+                return res.status(400).json({
+                    message: 'User Update Failed',
+                    data: []
+                });
             }
-            res.status(200).json({ message: 'Details deleted successfully' });
-
         } catch (error) {
-            console.error('Error inserting activity:', error);
-            res.status(500).json({ message: 'Internal Server Error' });
+            console.error('Error updating profile:', error);
+            return res.status(500).json({
+                message: 'Internal Server Error',
+                error: error.message
+            });
         }
     }
+    async UpdatePassword(req, res) {
+        try {
+            console.log("Incoming request body:", req.body);
+            const { Password, Email, ConfPassword} = req.body;
+
+            const validateuser = await UserServices.ValidateUser(Email, ConfPassword);
+
+            if (!validateuser) {
+                return res.status(401).json({
+                    message: 'UnAuthorized',
+                    data: []
+                });
+            }
+
+            const updateuser = await UserServices.UpdateUser({
+                Email: Email,
+                updateobj: {
+                    Password: Password
+                }
+            });
+
+            if (updateuser) {
+                return res.status(200).json({
+                    message: 'User Updated Successfully',
+                    data: updateuser
+                });
+            } else {
+                return res.status(400).json({
+                    message: 'User Update Failed',
+                    data: []
+                });
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            return res.status(500).json({
+                message: 'Internal Server Error',
+                error: error.message
+            });
+        }
+    }
+    
 }
-module.exports = new UserController(); 
+module.exports = new UserController();
